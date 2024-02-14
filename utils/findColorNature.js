@@ -15,3 +15,8 @@ const colorNature = (value) => {
   return colorValues;
 };
 module.exports = colorNature;
+// PORT = 4000
+// DB=mongodb+srv://brajamohamed:helloworld123@nodejs-task3.pgjnwxt.mongodb.net/capstone?retryWrites=true&w=majority
+// JWT=GUVI*123
+// EMAIL: b.rajamohamed@gmail.com
+// PASS: dzbvjstoohyitonh
