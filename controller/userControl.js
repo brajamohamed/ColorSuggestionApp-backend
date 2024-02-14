@@ -71,7 +71,6 @@ const updateUser = asyncHandler(async (req, res) => {
     email,
     dateOfBirth,
     country,
-    state,
     city,
     password,
     skinTone,
@@ -100,7 +99,6 @@ const updateUser = asyncHandler(async (req, res) => {
     if (email) updateFields.email = email;
     if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
     if (country) updateFields.country = country;
-    if (state) updateFields.state = state;
     if (city) updateFields.city = city;
     if (skinTone) updateFields.skinTone = skinTone;
     if (hairColor) updateFields.hairColor = hairColor;
