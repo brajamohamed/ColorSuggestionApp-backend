@@ -163,13 +163,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-    return res.status(200).json({ message: user });
     const resetLink = crypto.randomBytes(32).toString("hex");
     const resetToken = crypto
       .createHash("sha256")
       .update(resetLink)
       .digest("hex");
     user.passwordResetToken = resetToken;
+    return res.status(200).json({ message: resetToken });
     user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
     user.save();
     const emailLink = `Click the link below to reset your password<a href="http://localhost:4000/user/resetPassword/${resetToken}">Click Here</a>`;
