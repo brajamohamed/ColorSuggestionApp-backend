@@ -61,7 +61,7 @@ const userLogin = asyncHandler(async (req, res) => {
       res.status(400).json({ error: "Invalid Credentials" });
     }
   } catch (error) {
-    res.status(500).json({ error: "I don't know what happened" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 // UPDATE USER DETAILS
@@ -157,21 +157,25 @@ const updatePassword = asyncHandler(async (req, res) => {
 });
 // FORGOT PASSWORD
 const forgotPassword = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
-  const user = await User.findById(userId);
-  const email = user.email;
-  const resetLink = crypto.randomBytes(32).toString("hex");
-  const resetToken = crypto
-    .createHash("sha256")
-    .update(resetLink)
-    .digest("hex");
-  user.passwordResetToken = resetToken;
-  user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
-  user.save();
-  const emailLink = `Click the link below to reset your password<a href="http://localhost:4000/user/resetPassword/${resetToken}">Click Here</a>`;
-  const data = { email: email, link: emailLink };
-  await sendEmail(data);
-  res.send("email sent");
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+    const resetLink = crypto.randomBytes(32).toString("hex");
+    const resetToken = crypto
+      .createHash("sha256")
+      .update(resetLink)
+      .digest("hex");
+    user.passwordResetToken = resetToken;
+    user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
+    user.save();
+    const emailLink = `Click the link below to reset your password<a href="http://localhost:4000/user/resetPassword/${resetToken}">Click Here</a>`;
+    const data = { email: email, link: emailLink };
+    await sendEmail(data);
+    res.send("email sent");
+  } catch (error) {}
 });
 // FORGOT -> RESET PASSWORD
 const resetPassword = asyncHandler(async (req, res) => {
