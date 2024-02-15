@@ -163,6 +163,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
+    return res.status(200).json({ message: user });
     const resetLink = crypto.randomBytes(32).toString("hex");
     const resetToken = crypto
       .createHash("sha256")
