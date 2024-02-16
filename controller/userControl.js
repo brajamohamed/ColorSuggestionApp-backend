@@ -171,7 +171,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.passwordResetToken = resetToken;
     user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
     user.save();
-    return res.status(200).json({ message: resetToken });
+    // return res.status(200).json({ message: resetToken });
     const emailLink = `Click the link below to reset your password<a href="http://localhost:4000/user/resetPassword/${resetToken}">Click Here</a>`;
     const data = { email: email, link: emailLink };
     await sendEmail(data);
