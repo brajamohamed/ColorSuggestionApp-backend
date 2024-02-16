@@ -8,6 +8,7 @@ const {
   updatePassword,
   resetPassword,
   forgotPassword,
+  verifyResetPwdToken,
 } = require("../controller/userControl");
 const isAuth = require("../middlewares/isAuth");
 const router = express.Router();
@@ -19,6 +20,7 @@ router.put("/login", userLogin);
 router.put("/update", isAuth, updateUser);
 router.put("/updatePassword", isAuth, updatePassword);
 router.put("/forgotPassword", forgotPassword);
+router.put("/verifyResetPwdToken", verifyResetPwdToken);
 router.put("/resetPassword/:resetToken", resetPassword);
 
 module.exports = router;

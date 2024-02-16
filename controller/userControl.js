@@ -173,13 +173,30 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
     user.save();
     // return res.status(200).json({ message: resetToken });
-    const emailLink = `Click the link below to reset your password<a href="http://localhost:4000/user/resetPassword/${resetToken}">Click Here</a>`;
+    const emailLink = `Click the link below to reset your password<a href="http://localhost:5173/resetPassword/${resetToken}">Click Here</a>`;
     const data = { email: email, link: emailLink };
     await sendEmail(data);
     res.status(200).json({ message: "email sent" });
   } catch (error) {
     res.status(500).json({ error: error });
   }
+});
+// VERIFY RESET PASSWORD TOKEN
+const verifyResetPwdToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  try {
+    const user = User.findOne({ passwordResetToken: token });
+    if (user) {
+      if (user.passwordResetTokenExpiresAt > Date.now()) {
+        return res.status(400).json({ error: "Link Expired" });
+      } else {
+        return res
+          .status(200)
+          .json({ message: "link validated", user: user.name });
+      }
+    }
+  } catch (error) {}
+  res.status(500).json({ error: error });
 });
 // FORGOT -> RESET PASSWORD
 const resetPassword = asyncHandler(async (req, res) => {
@@ -223,4 +240,5 @@ module.exports = {
   updatePassword,
   forgotPassword,
   resetPassword,
+  verifyResetPwdToken,
 };
