@@ -158,6 +158,7 @@ const updatePassword = asyncHandler(async (req, res) => {
 // FORGOT PASSWORD
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
   try {
     const user = await User.findOne({ email: email });
     if (!user) {
