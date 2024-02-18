@@ -172,7 +172,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.passwordResetToken = resetToken;
     user.passwordResetTokenExpiresAt = Date.now() + 10 * 60 * 1000;
     user.save();
-    // return res.status(200).json({ message: resetToken });
     const emailLink = `Click the link below to reset your password<a href="http://localhost:5173/resetPassword/${resetToken}">Click Here</a>`;
     const data = { email: email, link: emailLink };
     await sendEmail(data);
@@ -184,34 +183,42 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // VERIFY RESET PASSWORD TOKEN
 const verifyResetPwdToken = asyncHandler(async (req, res) => {
   const { token } = req.body;
+  console.log(token);
+  // res.status(200).json({ message: "error" });
   try {
-    const user = User.findOne({ passwordResetToken: token });
+    const user = await User.findOne({ passwordResetToken: token });
     if (user) {
-      if (user.passwordResetTokenExpiresAt > Date.now()) {
+      console.log("user found, let me check time");
+      console.log(user);
+      if (user.passwordResetTokenExpiresAt < Date.now()) {
         return res.status(400).json({ error: "Link Expired" });
       } else {
         return res
           .status(200)
           .json({ message: "link validated", user: user.name });
       }
+    } else {
+      return res.status(400).json({ error: "Link not valid" });
     }
-  } catch (error) {}
-  res.status(500).json({ error: error });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 // FORGOT -> RESET PASSWORD
 const resetPassword = asyncHandler(async (req, res) => {
   const { resetToken } = req.params;
   const { password } = req.body;
-  const user = await User.findOne({ passwordResetToken: resetToken });
-  if (user) {
+  console.log("reset password");
+  try {
+    const user = await User.findOne({ passwordResetToken: resetToken });
     user.password = password;
+    user.passwordResetToken = "";
+    user.passwordResetTokenExpiresAt = "";
     await user.save();
     res.status(200).json({ message: "Password reset successfully" });
-  } else {
-    if (user.passwordResetTokenExpiresAt > Date.now()) {
-      return res.status(400).json({ error: "Token Expired" });
-    }
-    return res.status(404).json({ error: "Invalid Token" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 // CHECK IF THE COLOR DATABASE HAS ALL THE COLORS OF USER ELSE UPDATE COLOR DATABASE
