@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
-    currentColors: {
+    wardrobe: {
       type: Array,
       default: [],
     },

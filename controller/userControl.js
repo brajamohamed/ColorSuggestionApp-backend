@@ -10,12 +10,22 @@ const crypto = require("crypto");
 const registerUser = asyncHandler(async (req, res) => {
   try {
     const newUser = await User.create(req.body);
-    if (newUser.currentColors) {
-      updateColorDatabase(newUser.currentColors);
+    if (newUser.wardrobe) {
+      updateColorDatabase(newUser.wardrobe);
     }
     res.status(200).json({ message: "User registered successfully" });
   } catch (error) {
-    throw new Error(error.message);
+    if (error.keyPattern.email) {
+      return res
+        .status(400)
+        .json({ error: "User already registered with this Email" });
+    }
+    if (error.keyPattern.phone) {
+      return res
+        .status(400)
+        .json({ error: "User already registered with this Mobile number" });
+    }
+    res.status(500).json({ error: "Registration Failed. Please try again" });
   }
 });
 // GET ALL USERS
@@ -28,7 +38,8 @@ const getAllUsers = asyncHandler(async (req, res) => {
 });
 // GET A USER BY ID
 const getAUser = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.body;
+  console.log(userId);
   if (!userId) {
     return res.status(400).json({ error: "User id required" });
   }
@@ -81,7 +92,7 @@ const updateUser = asyncHandler(async (req, res) => {
     hairColor,
     eyeColor,
     preferredStyles,
-    currentColors,
+    wardrobe,
   } = req.body;
   if (email) {
     throw new Error("Email cannot be changed");
@@ -115,13 +126,12 @@ const updateUser = asyncHandler(async (req, res) => {
         user.preferredStyles.concat(duplicatedRemoved);
     }
 
-    if (currentColors) {
-      const duplicatedRemoved = currentColors.filter(
-        (color) => !user.currentColors.includes(color)
+    if (wardrobe) {
+      const duplicatedRemoved = wardrobe.filter(
+        (color) => !user.wardrobe.includes(color)
       );
       if (duplicatedRemoved.length > 0)
-        updateFields.currentColors =
-          user.currentColors.concat(duplicatedRemoved);
+        updateFields.wardrobe = user.wardrobe.concat(duplicatedRemoved);
     }
     if (Object.keys(updateFields).length == 0) {
       return res.status(400).json({ message: "No new fields to update" });
@@ -129,8 +139,8 @@ const updateUser = asyncHandler(async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
       new: true,
     });
-    if (updateFields.currentColors) {
-      updateColorDatabase(updatedUser.currentColors);
+    if (updateFields.wardrobe) {
+      updateColorDatabase(updatedUser.wardrobe);
     }
 
     console.log(updateFields);
