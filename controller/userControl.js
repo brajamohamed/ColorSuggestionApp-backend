@@ -10,10 +10,7 @@ const crypto = require("crypto");
 const registerUser = asyncHandler(async (req, res) => {
   try {
     const newUser = await User.create(req.body);
-    if (newUser.wardrobe) {
-      updateColorDatabase(newUser.wardrobe);
-    }
-    res.status(200).json({ message: "User registered successfully" });
+    res.status(200).json({ message: "User registered successfully", newUser });
   } catch (error) {
     if (error.keyPattern.email) {
       return res
@@ -79,8 +76,7 @@ const userLogin = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const {
     userId,
-    firstname,
-    lastname,
+    name,
     gender,
     phone,
     email,
@@ -92,7 +88,6 @@ const updateUser = asyncHandler(async (req, res) => {
     hairColor,
     eyeColor,
     preferredStyles,
-    wardrobe,
   } = req.body;
   if (email) {
     throw new Error("Email cannot be changed");
@@ -100,15 +95,13 @@ const updateUser = asyncHandler(async (req, res) => {
   if (password) {
     throw new Error("Use Update Password section for changing password");
   }
-  console.log(userId);
   try {
     const user = await User.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
     const updateFields = {};
-    if (firstname) updateFields.firstname = firstname;
-    if (lastname) updateFields.lastname = lastname;
+    if (name) updateFields.name = name;
     if (gender) updateFields.gender = gender;
     if (phone) updateFields.phone = phone;
     if (email) updateFields.email = email;
@@ -126,27 +119,83 @@ const updateUser = asyncHandler(async (req, res) => {
         user.preferredStyles.concat(duplicatedRemoved);
     }
 
-    if (wardrobe) {
-      const duplicatedRemoved = wardrobe.filter(
-        (color) => !user.wardrobe.includes(color)
-      );
-      if (duplicatedRemoved.length > 0)
-        updateFields.wardrobe = user.wardrobe.concat(duplicatedRemoved);
-    }
-    if (Object.keys(updateFields).length == 0) {
-      return res.status(400).json({ message: "No new fields to update" });
-    }
     const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
       new: true,
     });
-    if (updateFields.wardrobe) {
-      updateColorDatabase(updatedUser.wardrobe);
-    }
-
-    console.log(updateFields);
-    res.send(updatedUser);
+    // if (updateFields.wardrobe) {
+    //   updateColorDatabase(updatedUser.wardrobe);
+    // }
+    // console.log(updateFields);
+    res.status(200).json({ message: "user updated", user: updatedUser });
   } catch (error) {
     throw new Error(error.stack);
+  }
+});
+// ADD NEW WARDROBE ITEM
+const addToWardrobe = asyncHandler(async (req, res) => {
+  console.log("add request received");
+  const { userId, newWardrobeItem } = req.body;
+  console.log("new wardrobe item received", newWardrobeItem);
+  try {
+    const user = await User.findById(userId);
+    const oldWardrobe = user.wardrobe;
+    const isDuplicate = () => {
+      return oldWardrobe.some(
+        (item) =>
+          item.color === newWardrobeItem.color &&
+          item.category === newWardrobeItem.category &&
+          item.group === newWardrobeItem.group
+      );
+    };
+    if (isDuplicate()) {
+      return res.status(400).json({ error: "This item is already added." });
+    }
+    user.wardrobe.push(newWardrobeItem);
+    console.log(user.wardrobe);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { wardrobe: user.wardrobe },
+      { new: true }
+    );
+    res.status(200).json({ message: "Item added", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+// DELETE ITEM FROM WARDROBE
+const deleteFromWardrobe = asyncHandler(async (req, res) => {
+  const { userId, itemToDelete } = req.body;
+  console.log("to delete", itemToDelete);
+  try {
+    const user = await User.findById(userId);
+    const existingItem = user.wardrobe.filter(
+      (item) =>
+        item.color === itemToDelete.color &&
+        item.category === itemToDelete.category &&
+        item.group === itemToDelete.group
+    );
+    if (existingItem.length === 0) {
+      console.log("existing item length 0");
+      return res.status(400).json({ error: "Item not found" });
+    }
+    const newWardrobe = user.wardrobe.filter(
+      (item) =>
+        !(
+          item.color === itemToDelete.color &&
+          item.category === itemToDelete.category &&
+          item.group === itemToDelete.group
+        )
+    );
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { wardrobe: newWardrobe },
+      { new: true }
+    );
+    res
+      .status(200)
+      .json({ message: "Item deleted successfully", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: "Inernal Server Error" });
   }
 });
 // UPDATE PASSWORD
@@ -232,22 +281,22 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 // CHECK IF THE COLOR DATABASE HAS ALL THE COLORS OF USER ELSE UPDATE COLOR DATABASE
-const updateColorDatabase = async (newColors) => {
-  try {
-    const colorDatabase = await Color.find();
-    const colors = colorDatabase.map((color) => color.colorName);
-    const colorsToUpdate = newColors.filter((color) => !colors.includes(color));
-    console.log(
-      `colors in database ${colors} colors to update ${colorsToUpdate}`
-    );
-    for (let color of colorsToUpdate) {
-      console.log("inside for", color);
-      await Color.create({ colorValue: color });
-    }
-  } catch (error) {
-    console.log(error.message);
-  }
-};
+// const updateColorDatabase = async (newColors) => {
+//   try {
+//     const colorDatabase = await Color.find();
+//     const colors = colorDatabase.map((color) => color.colorValue);
+//     const colorsToUpdate = newColors.filter((color) => !colors.includes(color));
+//     console.log(
+//       `colors in database ${colors} colors to update ${colorsToUpdate}`
+//     );
+//     for (let color of colorsToUpdate) {
+//       console.log("inside for", color);
+//       await Color.create({ colorValue: color });
+//     }
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// };
 module.exports = {
   registerUser,
   getAllUsers,
@@ -258,4 +307,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyResetPwdToken,
+  addToWardrobe,
+  deleteFromWardrobe,
 };
