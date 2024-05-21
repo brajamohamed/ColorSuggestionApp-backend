@@ -7,11 +7,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       required: true,
     },
-    gender: {
-      type: String,
-      required: true,
-      enum: ["male", "female"],
-    },
+    // gender: {
+    //   type: String,
+    //   required: true,
+    //   enum: ["male", "female"],
+    // },
     phone: {
       type: String,
       trim: true,
