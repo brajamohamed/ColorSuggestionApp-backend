@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    undertone: String,
     skinTone: String,
     hairColor: String,
     eyeColor: String,

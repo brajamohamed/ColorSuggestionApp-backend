@@ -6,6 +6,7 @@ const generateToken = require("../jwt");
 const validateMongoDBObjectId = require("../utils/validateId");
 const sendEmail = require("./emailControl");
 const crypto = require("crypto");
+const color2Name = require("color-2-name");
 // REGISTER USER
 const registerUser = asyncHandler(async (req, res) => {
   try {
@@ -74,10 +75,11 @@ const userLogin = asyncHandler(async (req, res) => {
 });
 // UPDATE USER DETAILS
 const updateUser = asyncHandler(async (req, res) => {
+  console.log(req.body);
   const {
     userId,
     name,
-    gender,
+    undertone,
     phone,
     email,
     dateOfBirth,
@@ -102,12 +104,12 @@ const updateUser = asyncHandler(async (req, res) => {
     }
     const updateFields = {};
     if (name) updateFields.name = name;
-    if (gender) updateFields.gender = gender;
     if (phone) updateFields.phone = phone;
     if (email) updateFields.email = email;
     if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
     if (country) updateFields.country = country;
     if (city) updateFields.city = city;
+    if (undertone) updateFields.undertone = undertone;
     if (skinTone) updateFields.skinTone = skinTone;
     if (hairColor) updateFields.hairColor = hairColor;
     if (eyeColor) updateFields.eyeColor = eyeColor;
@@ -118,7 +120,7 @@ const updateUser = asyncHandler(async (req, res) => {
       updateFields.preferredStyles =
         user.preferredStyles.concat(duplicatedRemoved);
     }
-
+    console.log("fields to be updated", updateFields);
     const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
       new: true,
     });
@@ -150,8 +152,14 @@ const addToWardrobe = asyncHandler(async (req, res) => {
     if (isDuplicate()) {
       return res.status(400).json({ error: "This item is already added." });
     }
+
+    newWardrobeItem.colorname = color2Name.closest(newWardrobeItem.color).name;
+    newWardrobeItem.isWarm = color2Name.isDark(newWardrobeItem.color);
+    newWardrobeItem.isCool = color2Name.isLight(newWardrobeItem.color);
+
+    console.log("I am going to add this boss,", newWardrobeItem);
     user.wardrobe.push(newWardrobeItem);
-    console.log(user.wardrobe);
+    // console.log(user.wardrobe);
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { wardrobe: user.wardrobe },
