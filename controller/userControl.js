@@ -154,10 +154,13 @@ const addToWardrobe = asyncHandler(async (req, res) => {
     }
 
     newWardrobeItem.colorname = color2Name.closest(newWardrobeItem.color).name;
+    newWardrobeItem.temperature = color2Name.isDark(newWardrobeItem.color)
+      ? "warm"
+      : "cool";
     newWardrobeItem.isWarm = color2Name.isDark(newWardrobeItem.color);
     newWardrobeItem.isCool = color2Name.isLight(newWardrobeItem.color);
 
-    console.log("I am going to add this boss,", newWardrobeItem);
+    console.log("I am going to add this", newWardrobeItem);
     user.wardrobe.push(newWardrobeItem);
     // console.log(user.wardrobe);
     const updatedUser = await User.findByIdAndUpdate(
